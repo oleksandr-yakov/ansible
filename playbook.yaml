@@ -9,11 +9,19 @@
 
   tasks:
   
-    - name: Install Nginx using the appropriate package manager
+    - name: Install Nginx using yum
       dnf:
         name: nginx
         state: present
-      register: install_result  
+      register: install_result
+      when: ansible_pkg_mgr == "yum" 
+
+    - name: Install Nginx using dnf
+      dnf:
+        name: nginx
+        state: present
+      register: install_result
+      when: ansible_pkg_mgr == "dnf"  
 
     - name: Debug installation result
       debug:
