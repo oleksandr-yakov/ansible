@@ -1,0 +1,33 @@
+---
+
+- name: Up nginx with custom HTML
+  hosts: dev
+  become: true
+
+  tasks:
+  
+    - name: Install Nginx using the appropriate package manager
+      dnf:
+        name: nginx
+        state: present
+
+    - name: Start and enable Nginx
+      systemd:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Remove  file  /usr/share/nginx/html
+      file:
+        path: /usr/share/nginx/html/index.html
+        state: absent
+    
+    - name: Copy my HTML
+      copy: src=./tmp/index.html dest=/usr/share/nginx/html/
+      notify: Restart Nginx
+  
+  handlers:
+    - name: Restart Nginx
+      service:
+        name: nginx
+        state: restarted
