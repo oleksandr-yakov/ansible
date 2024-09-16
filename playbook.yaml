@@ -3,6 +3,9 @@
 - name: Up nginx with custom HTML
   hosts: dev
   become: true
+  vars:
+    source: ./tmp/index.html
+    destin: /usr/share/nginx/html/index.html
 
   tasks:
   
@@ -17,13 +20,15 @@
         state: started
         enabled: true
 
-    - name: Remove  file  /usr/share/nginx/html
+    - name: Remove  file  {{ destin }}
       file:
-        path: /usr/share/nginx/html/index.html
+        path: "{{ destin }}"
         state: absent
     
     - name: Copy my HTML
-      copy: src=./tmp/index.html dest=/usr/share/nginx/html/
+      copy: 
+        src: "{{ source }}" 
+        dest: /usr/share/nginx/html/
       notify: Restart Nginx
   
   handlers:
