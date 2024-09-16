@@ -1,11 +1,11 @@
 ---
-
 - name: Up nginx with custom HTML
   hosts: dev
   become: true
   vars:
     source: ./tmp/index.html
-    destin: /usr/share/nginx/html/index.html
+    destin_folder: /usr/share/nginx/html
+    destin_file: "{{ destin_folder }}/index.html"
 
   tasks:
   
@@ -13,22 +13,41 @@
       dnf:
         name: nginx
         state: present
+      register: install_result  
+
+    - name: Debug installation result
+      debug:
+        var: install_result  
 
     - name: Start and enable Nginx
       systemd:
         name: nginx
         state: started
         enabled: true
+      register: nginx_status 
 
-    - name: Remove  file  {{ destin }}
+    - name: Show Nginx status
+      debug:
+        var: nginx_status.state 
+
+    - name: Set a custom fact with file path
+      set_fact:
+        custom_path: "{{ destin_file }}"  
+
+    - name: Debug custom fact
+      debug:
+        var: custom_path 
+
+    - name: Remove the file {{ custom_path }}
       file:
-        path: "{{ destin }}"
+        path: "{{ custom_path }}"
         state: absent
-    
+      when: nginx_status.state == "started"  
+
     - name: Copy my HTML
-      copy: 
+      copy:
         src: "{{ source }}" 
-        dest: /usr/share/nginx/html/
+        dest: "{{ destin_folder }}/"
       notify: Restart Nginx
   
   handlers:
