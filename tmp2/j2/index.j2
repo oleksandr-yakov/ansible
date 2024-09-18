@@ -44,6 +44,7 @@
 <body>
 
     <h1 style="text-align:center; padding: 20px;">Image Gallery</h1>
+    <h1 style="text-align:center; padding: 20px;">Env is {{ env }}</h1>
     
     <div class="container">
         <div class="image-box">
@@ -63,5 +64,7 @@
             <p>Calm Forest Path</p>
         </div>
     </div>
+    <h1 style="text-align:center; padding: 20px;">Sever Host Name : {{ ansible_hostname }}</h1>
+    <h1 style="text-align:center; padding: 20px;">Sever Pub IP : {{ ansible_default_ipv4.address }}</h1>
 </body>
 </html>

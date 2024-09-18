@@ -1,0 +1,84 @@
+---
+- name: Up nginx with custom HTML
+  hosts: dev_test
+  become: true
+  vars:
+    source: ../tmp2
+    source_j2: "{{source}}/j2/index.j2"
+    destin_folder: /usr/share/nginx/html
+    destin_file: "{{ destin_folder }}/index.html"
+
+  tasks:
+  
+    - name: Install Nginx using yum #fatal: [linux1-dev]: FAILED! "msg": "The Python 2 yum module is needed for this module. If you require Python 3 support use the `dnf` Ansible module instead.
+      dnf:
+        name: nginx
+        state: present
+      register: install_result
+      when: ansible_pkg_mgr == "yum" 
+
+    - name: Install Nginx using dnf
+      dnf:
+        name: nginx
+        state: present
+      register: install_result
+      when: ansible_pkg_mgr == "dnf"   
+
+    - name: Start and enable Nginx
+      systemd:
+        name: nginx
+        state: started
+        enabled: true
+      register: nginx_status 
+
+    # - name: Remove the file {{ destin_file }}
+    #   file:
+    #     path: "{{ destin_file }}"
+    #     state: absent
+    #   when: nginx_status.state == "started"  
+    - name: Get {{ destin_folder }} listing
+      find:
+        path: "{{ destin_folder }}" 
+        file_type: any
+        hidden: yes
+      register: directory_content_result
+
+    - name: Remove {{ destin_folder }} content
+      file:
+        path: "{{ item.path }}" 
+        state: absent
+      with_items: "{{ directory_content_result.files }}" 
+      loop_control:
+        label: "{{ item.path }}"
+
+#=============>NO!<=============
+    # - name: Copy my HTML and jpegs
+    #   copy:
+    #     src: "{{ source }}/{{ item }}" 
+    #     dest: "{{ destin_folder }}/"
+    #   loop:
+    #     - "index.html"
+    #     - "1.jpeg"
+    #     - "2.jpeg"
+    #     - "3.jpeg"
+    #     - "4.jpeg"
+    #   notify: Restart Nginx
+  #=============>YES!<=============
+    - name: Copy only jpegs
+      copy:
+        src: "{{ item }}" 
+        dest: "{{ destin_folder }}/"
+      with_fileglob: "{{ source }}/*.jpeg"
+      notify: Restart Nginx
+
+    - name: Genegate Template
+      template: 
+        src: "{{source_j2}}"
+        dest: "{{ destin_folder }}/index.html"
+      notify: Restart Nginx
+
+  handlers:
+    - name: Restart Nginx
+      service:
+        name: nginx
+        state: restarted
