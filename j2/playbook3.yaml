@@ -1,84 +1,84 @@
 ---
 - name: Up nginx with custom HTML
-  hosts: dev_test
+  hosts: debian
   become: true
   vars:
     source: ../tmp2
     source_j2: "{{source}}/j2/index.j2"
     destin_folder: /usr/share/nginx/html
     destin_file: "{{ destin_folder }}/index.html"
+    nginx_version: 1.26.0 
 
   tasks:
-  
-    - name: Install Nginx using yum #fatal: [linux1-dev]: FAILED! "msg": "The Python 2 yum module is needed for this module. If you require Python 3 support use the `dnf` Ansible module instead.
-      dnf:
-        name: nginx
-        state: present
-      register: install_result
-      when: ansible_pkg_mgr == "yum" 
+  - name: Ensure gnupg is installed (for APT key management)
+    when: ansible_os_family == 'Debian'
+    become: true
+    apt:
+      name: gnupg
+      state: present
+      update_cache: yes
 
-    - name: Install Nginx using dnf
-      dnf:
-        name: nginx
-        state: present
-      register: install_result
-      when: ansible_pkg_mgr == "dnf"   
+  - name: Adding APT repository key
+    when: ansible_os_family == 'Debian'
+    become: true
+    apt_key:
+      url: "http://nginx.org/keys/nginx_signing.key"
+      state: present
 
-    - name: Start and enable Nginx
-      systemd:
-        name: nginx
-        state: started
-        enabled: true
-      register: nginx_status 
+  - name: Add official APT repository
+    when: ansible_os_family == 'Debian'
+    become: true
+    apt_repository:
+      repo: "deb http://nginx.org/packages/{{ansible_distribution|lower}}/ {{ansible_distribution_release}} nginx"
+      state: present
 
-    # - name: Remove the file {{ destin_file }}
-    #   file:
-    #     path: "{{ destin_file }}"
-    #     state: absent
-    #   when: nginx_status.state == "started"  
-    - name: Get {{ destin_folder }} listing
-      find:
-        path: "{{ destin_folder }}" 
-        file_type: any
-        hidden: yes
-      register: directory_content_result
+  - name: Install Nginx on Debian
+    when: ansible_os_family == 'Debian'
+    become: true
+    apt: 
+      name: "nginx"
+      state: present
+      update_cache: yes
+      cache_valid_time: 3600
 
-    - name: Remove {{ destin_folder }} content
-      file:
-        path: "{{ item.path }}" 
-        state: absent
-      with_items: "{{ directory_content_result.files }}" 
-      loop_control:
-        label: "{{ item.path }}"
+  - name: Install Nginx using dnf (for non-Debian systems)
+    when: ansible_pkg_mgr == "dnf"
+    become: true
+    dnf:
+      name: nginx
+      state: present
+    register: install_result
 
-#=============>NO!<=============
-    # - name: Copy my HTML and jpegs
-    #   copy:
-    #     src: "{{ source }}/{{ item }}" 
-    #     dest: "{{ destin_folder }}/"
-    #   loop:
-    #     - "index.html"
-    #     - "1.jpeg"
-    #     - "2.jpeg"
-    #     - "3.jpeg"
-    #     - "4.jpeg"
-    #   notify: Restart Nginx
-  #=============>YES!<=============
-    - name: Copy only jpegs
-      copy:
-        src: "{{ item }}" 
-        dest: "{{ destin_folder }}/"
-      with_fileglob: "{{ source }}/*.jpeg"
-      notify: Restart Nginx
+  - name: Start and enable Nginx
+    become: true
+    systemd:
+      name: nginx
+      state: started
+      enabled: true
+    register: nginx_status
 
-    - name: Genegate Template
-      template: 
-        src: "{{source_j2}}"
-        dest: "{{ destin_folder }}/index.html"
-      notify: Restart Nginx
+  - name: Remove the file {{ destin_file }}
+    file:
+      path: "{{ destin_file }}"
+      state: absent
+    when: nginx_status.state == "started"
+
+  - name: Copy only jpegs
+    copy:
+      src: "{{ item }}"
+      dest: "{{ destin_folder }}/"
+    with_fileglob: "{{ source }}/*.jpeg"
+    notify: Restart Nginx
+
+  - name: Generate Template
+    template: 
+      src: "{{source_j2}}"
+      dest: "{{ destin_file }}"
+    notify: Restart Nginx
 
   handlers:
     - name: Restart Nginx
+      become: true
       service:
         name: nginx
         state: restarted
