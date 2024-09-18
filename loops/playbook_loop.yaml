@@ -1,0 +1,54 @@
+---
+- name: Loops in Ansible
+  hosts: dev_test
+  become: true
+  vars:
+    env: dev_test
+    source: ./tmp2/*
+    destin_folder: /usr/share/nginx/html
+    directory: /home/ec2-user/test
+  
+  tasks:
+
+  # - name: Loop Hello
+  #   debug: msg="hello {{ item }}"  
+  #   loop:
+  #     - "Kol"
+  #     - "dnf"
+  #     - "me"
+  #     - "last"
+
+  # - name: until loop
+  #   shell: echo -n "Z" >> file.txt && cat file.txt
+  #   register: text
+  #   delay: 1
+  #   retries: 10
+  #   until: "'ZZZZ' in text.stdout"
+
+  # - name: print final
+  #   debug: 
+  #     var: text.stdout
+
+
+  # - name: install packages
+  #   dnf:
+  #     name: {{ item }}
+  #     state: instaled
+  #   loop:
+  #     - tree
+  #     - python3
+  #     - mysql 
+  - name: Get directory listing
+    find:
+      path: "{{ directory }}" 
+      file_type: any
+      hidden: yes
+    register: directory_content_result
+
+  - name: Remove directory content
+    file:
+      path: "{{ item.path }}" 
+      state: absent
+    with_items: "{{ directory_content_result.files }}" 
+    loop_control:
+      label: "{{ item.path }}"

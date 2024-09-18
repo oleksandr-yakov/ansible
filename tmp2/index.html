@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Gallery</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 20px;
+        }
+        .image-box {
+            width: 300px;
+            text-align: center;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            transition: transform 0.3s;
+        }
+        .image-box img {
+            width: 100%;
+            border-radius: 10px;
+        }
+        .image-box:hover {
+            transform: scale(1.05);
+        }
+        .image-box p {
+            margin-top: 10px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1 style="text-align:center; padding: 20px;">Image Gallery</h1>
+    
+    <div class="container">
+        <div class="image-box">
+            <img src="1.jpeg" alt="Image 1">
+            <p>Beautiful Landscape</p>
+        </div>
+        <div class="image-box">
+            <img src="2.jpeg" alt="Image 2">
+            <p>Sunset over the Mountains</p>
+        </div>
+        <div class="image-box">
+            <img src="3.jpeg" alt="Image 3">
+            <p>Serene Beach View</p>
+        </div>
+        <div class="image-box">
+            <img src="4.jpeg" alt="Image 4">
+            <p>Calm Forest Path</p>
+        </div>
+    </div>
+
+</body>
+</html>

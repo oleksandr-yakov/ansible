@@ -9,7 +9,7 @@
 
   tasks:
   
-    - name: Install Nginx using yum
+    - name: Install Nginx using yum #fatal: [linux1-dev]: FAILED! "msg": "The Python 2 yum module is needed for this module. If you require Python 3 support use the `dnf` Ansible module instead.
       dnf:
         name: nginx
         state: present
