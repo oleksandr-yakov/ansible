@@ -1,11 +1,5 @@
 ---
 # handlers file for deploy-nginx-web
-- name: Restart Nginx
-  become: true
-  service:
-    name: nginx
-    state: restarted
-
 - name: Start and enable Nginx
   become: true
   systemd:
@@ -14,6 +8,12 @@
     enabled: true
   register: nginx_status
 
+- name: Restart Nginx
+  become: true
+  service:
+    name: nginx
+    state: restarted
+    
 - name: Check Nginx installation status
   debug:
     msg: >
