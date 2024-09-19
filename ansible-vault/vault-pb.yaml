@@ -1,0 +1,29 @@
+- name: Ansible Vault
+  hosts: amazon
+  become: true
+
+  vars:
+    admin_pass: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          65636561313136303536333034343638336465626631373537346466353564316436386432636636
+          3932343565303830363064366434396564396630333165350a393739663162613163663961326337
+          32616230313936303962303363393465373962353237356135663038616264623961663764636130
+          3639626139303362630a623439386633303338396166303333613837396339393165383231623665
+          3036
+
+  tasks:
+
+  - name: Install tree
+    dnf:
+      name: tree
+      state: present
+
+  - name: Create conf file
+    copy:
+      dest: /home/ec2-user/admin.conf
+      content: |
+        port: 1223
+        log: 4 hours
+        home_dir: alex-the-best
+        user: admin
+        password: {{admin_pass}}
