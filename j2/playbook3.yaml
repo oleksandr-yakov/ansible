@@ -1,6 +1,6 @@
 ---
 - name: Up nginx with custom HTML
-  hosts: debian
+  hosts: dev
   become: true
   vars:
     source: ../tmp2
@@ -10,71 +10,75 @@
     nginx_version: 1.26.0 
 
   tasks:
-  - name: Ensure gnupg is installed (for APT key management)
-    when: ansible_os_family == 'Debian'
-    become: true
-    apt:
-      name: gnupg
-      state: present
-      update_cache: yes
+    - block: # =======DEBIAN=======
+      - name: Ensure gnupg is installed (for APT key management)
+        become: true
+        apt:
+          name: gnupg
+          state: present
+          update_cache: yes
 
-  - name: Adding APT repository key
-    when: ansible_os_family == 'Debian'
-    become: true
-    apt_key:
-      url: "http://nginx.org/keys/nginx_signing.key"
-      state: present
+      - name: Adding APT repository key
+        become: true
+        apt_key:
+          url: "http://nginx.org/keys/nginx_signing.key"
+          state: present
 
-  - name: Add official APT repository
-    when: ansible_os_family == 'Debian'
-    become: true
-    apt_repository:
-      repo: "deb http://nginx.org/packages/{{ansible_distribution|lower}}/ {{ansible_distribution_release}} nginx"
-      state: present
+      - name: Add official APT repository
+        become: true
+        apt_repository:
+          repo: "deb http://nginx.org/packages/{{ansible_distribution|lower}}/ {{ansible_distribution_release}} nginx"
+          state: present
 
-  - name: Install Nginx on Debian
-    when: ansible_os_family == 'Debian'
-    become: true
-    apt: 
-      name: "nginx"
-      state: present
-      update_cache: yes
-      cache_valid_time: 3600
+      - name: Install Nginx on Debian
+        become: true
+        apt: 
+          name: "nginx"
+          state: present
+          update_cache: yes
+          cache_valid_time: 3600
+        register: nginx_install_result
+        notify:
+          - Start and enable Nginx
+          - Check Nginx installation status
 
-  - name: Install Nginx using dnf (for non-Debian systems)
-    when: ansible_pkg_mgr == "dnf"
-    become: true
-    dnf:
-      name: nginx
-      state: present
-    register: install_result
+      when: ansible_os_family == 'Debian'
+            
 
-  - name: Start and enable Nginx
-    become: true
-    systemd:
-      name: nginx
-      state: started
-      enabled: true
-    register: nginx_status
 
-  - name: Remove the file {{ destin_file }}
-    file:
-      path: "{{ destin_file }}"
-      state: absent
-    when: nginx_status.state == "started"
+    - block: # =======AMZ LINUX=======
+      - name: Install Nginx using dnf (for non-Debian systems)
+        become: true
+        dnf:
+          name: nginx
+          state: present
+        register: nginx_install_result
+        notify:
+          - Start and enable Nginx
+          - Check Nginx installation status
+      when: ansible_os_family == 'RedHat'
 
-  - name: Copy only jpegs
-    copy:
-      src: "{{ item }}"
-      dest: "{{ destin_folder }}/"
-    with_fileglob: "{{ source }}/*.jpeg"
-    notify: Restart Nginx
+    - block:  # =======DELIVERY=======
 
-  - name: Generate Template
-    template: 
-      src: "{{source_j2}}"
-      dest: "{{ destin_file }}"
-    notify: Restart Nginx
+    #========USELESS=========
+      # - name: Remove the file {{ destin_file }}
+      #   file:
+      #     path: "{{ destin_file }}"
+      #     state: absent
+      #   when: nginx_status.state == "started"
+
+      - name: Copy only jpegs
+        copy:
+          src: "{{ item }}"
+          dest: "{{ destin_folder }}/"
+        with_fileglob: "{{ source }}/*.jpeg"
+        notify: Restart Nginx
+
+      - name: Generate Template
+        template: 
+          src: "{{source_j2}}"
+          dest: "{{ destin_file }}"
+        notify: Restart Nginx
 
   handlers:
     - name: Restart Nginx
@@ -82,3 +86,23 @@
       service:
         name: nginx
         state: restarted
+
+    - name: Start and enable Nginx
+      become: true
+      systemd:
+        name: nginx
+        state: started
+        enabled: true
+      register: nginx_status
+
+    - name: Check Nginx installation status
+      debug:
+        msg: >
+          Nginx installation status:
+          - Success: {{ not nginx_install_result.failed | default({}) }}
+      when: nginx_install_result is defined
+#===========================MORE INFO==============================
+    # - name: Check Nginx installation status
+    #   debug:
+    #     msg: "{{ nginx_install_result }}"
+    #   when: nginx_install_result is defined
