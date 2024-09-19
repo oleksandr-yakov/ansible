@@ -1,6 +1,6 @@
 ---
 - name: Up nginx with custom HTML
-  hosts: dev
+  hosts: "{{HOST}}"
   become: true
 
   roles: 

@@ -1,6 +1,6 @@
 ---
 - name: Remove Nginx with custom HTML
-  hosts: dev
+  hosts: up_dev
   become: true
   vars:
     destin_folder: /usr/share/nginx/html
