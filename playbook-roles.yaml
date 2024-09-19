@@ -1,0 +1,8 @@
+---
+- name: Up nginx with custom HTML
+  hosts: dev
+  become: true
+
+  roles: 
+    - role: deploy-nginx-web
+      when: ansible_system == 'Linux'

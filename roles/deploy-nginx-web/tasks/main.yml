@@ -1,0 +1,71 @@
+---
+# tasks file for deploy-nginx-web
+- block: # =======DEBIAN=======
+  - name: Ensure gnupg is installed (for APT key management)
+    become: true
+    apt:
+      name: gnupg
+      state: present
+      update_cache: yes
+
+  - name: Adding APT repository key
+    become: true
+    apt_key:
+      url: "http://nginx.org/keys/nginx_signing.key"
+      state: present
+
+  - name: Add official APT repository
+    become: true
+    apt_repository:
+      repo: "deb http://nginx.org/packages/{{ansible_distribution|lower}}/ {{ansible_distribution_release}} nginx"
+      state: present
+
+  - name: Install Nginx on Debian
+    become: true
+    apt: 
+      name: "nginx"
+      state: present
+      update_cache: yes
+      cache_valid_time: 3600
+    register: nginx_install_result
+    notify:
+      - Start and enable Nginx
+      - Check Nginx installation status
+
+  when: ansible_os_family == 'Debian'
+        
+
+
+- block: # =======AMZ LINUX=======
+  - name: Install Nginx using dnf (for non-Debian systems)
+    become: true
+    dnf:
+      name: nginx
+      state: present
+    register: nginx_install_result
+    notify:
+      - Start and enable Nginx
+      - Check Nginx installation status
+  when: ansible_os_family == 'RedHat'
+
+- block:  # =======DELIVERY=======
+
+#========USELESS=========
+  # - name: Remove the file {{ destin_file }}
+  #   file:
+  #     path: "{{ destin_file }}"
+  #     state: absent
+  #   when: nginx_status.state == "started"
+
+  - name: Copy only jpegs
+    copy:
+      src: "{{ item }}"
+      dest: "{{ destin_folder }}/"
+    with_fileglob: "*.jpeg"
+    notify: Restart Nginx
+
+  - name: Generate Template
+    template: 
+      src: "index.j2"
+      dest: "{{ destin_file }}"
+    notify: Restart Nginx

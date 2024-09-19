@@ -1,0 +1,5 @@
+---
+# defaults file for deploy-nginx-web
+destin_folder: /usr/share/nginx/html
+destin_file: "{{ destin_folder }}/index.html"
+nginx_version: 1.26.

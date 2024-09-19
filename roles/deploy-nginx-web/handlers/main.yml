@@ -1,0 +1,27 @@
+---
+# handlers file for deploy-nginx-web
+- name: Restart Nginx
+  become: true
+  service:
+    name: nginx
+    state: restarted
+
+- name: Start and enable Nginx
+  become: true
+  systemd:
+    name: nginx
+    state: started
+    enabled: true
+  register: nginx_status
+
+- name: Check Nginx installation status
+  debug:
+    msg: >
+      Nginx installation status:
+      - Success: {{ not nginx_install_result.failed | default({}) }}
+  when: nginx_install_result is defined
+#===========================MORE INFO==============================
+    # - name: Check Nginx installation status
+    #   debug:
+    #     msg: "{{ nginx_install_result }}"
+    #   when: nginx_install_result is defined
