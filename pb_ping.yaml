@@ -1,8 +1,0 @@
----
-- name: Test Ping Pong
-  hosts: up_dev
-  become: yes
-
-  tasks:
-  - name: Ping Pong
-    ping:
