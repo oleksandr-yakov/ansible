@@ -1,0 +1,16 @@
+---
+- name: include import 
+  hosts: "{{host}}"
+  become: true
+
+  vars:
+    env: rabotu
+
+  tasks:
+    - name: Simple pong
+      ping:
+    
+    - name: mkdir folders
+      include: mkdir.yaml
+
+    - include: touch.yaml 

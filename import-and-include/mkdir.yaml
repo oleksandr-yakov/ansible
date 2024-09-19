@@ -1,0 +1,12 @@
+---
+- name: Create Dir1
+  file:
+    path: /home/secret/dir1
+    state: directory
+    mode: 0774
+
+- name: Create Dir2
+  file:
+    path: /home/secret/dir2
+    state: directory
+    mode: 0774

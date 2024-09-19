@@ -1,0 +1,43 @@
+---
+- name: include import
+  hosts: {{host}}
+  become: true
+
+  vars:
+    env: rabotu
+
+  tasks:
+    - name: Simple pong
+      ping:
+
+    - name: Create Dir1
+      file:
+        - path: /home/secret/dir1
+          tate: directory
+          mode: 0774
+    
+    - name: Create Dir2
+      file:
+        - path: /home/secret/dir2
+          tate: directory
+          mode: 0774
+
+    - name: Create File1
+      copy:
+        - dest: /home/secret/file1.txt
+          content: |
+            qwertyu, hochu
+            asdfghj, nayti
+            zxcvbnm, {{env}}
+
+    - name: Create File2
+      file:
+        - dest: /home/secret/file2.txt
+          content: |
+            qwertyu, hochu
+            asdfghj, nayti
+            zxcvbnm, {{env}}
+
+
+          
+
